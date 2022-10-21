@@ -1,4 +1,5 @@
 #include "ThreeDoor.h"
+#include <mingw.thread.h>
 
 inline int ThreeDoor::ensureCorrectDoor(int n) {
     //get the correct door
