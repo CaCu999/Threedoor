@@ -1,6 +1,4 @@
 #include "ThreeDoor.h"
-#include <mingw.thread.h>
-#include <mingw.mutex.h>
 
 inline int ThreeDoor::ensureCorrectDoor(int n) {
     //get the correct door
@@ -137,36 +135,19 @@ inline void ThreeDoor::retryProbability() {
 }
 
 static int winner = 0;
-mutex mu;
-
-void start(int n) {
-    for(int i = 1 ; i <= 100 ; i++) {
-        ThreeDoor td(n);
-        td.startGame();
-        mu.lock();
-        if(td.isWin) winner++;
-        mu.unlock();
-    }
-}
 
 int main(){
     
     srand(time(0));
     int n;
     // scanf("%d",&n);
-    n = 10;
-    /*
-    for(int i = 1 ; i <= 1000 ; i++) {
+    n = 3;
+    for(int i = 1 ; i <= 100 ; i++) {
         ThreeDoor td(n);
         // threeDoors(n);
         td.startGame();
         if(td.isWin) winner++;
     }
-    */
-    thread td1(start,n);
-    thread td2(start,n);
-    td1.join();
-    td2.join();
     printf("/////////////////////////////////////////////////\n");
     printf("\t\twinner is %d\n",winner);
     printf("/////////////////////////////////////////////////\n");
