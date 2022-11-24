@@ -2,6 +2,8 @@
 #include <bits/stdc++.h>
 #include <algorithm>
 #include <map>
+#include "log.h"
+#define LEVEL LOG_LEVEL_WARNING
 using namespace std;
 
 class ThreeDoor{
@@ -25,9 +27,10 @@ public:
     void selectDoor();
     void deleteDoor();
     void retryProbability();
-
+    void displayAllProbabilities();
     bool isWin = false;
     void displayRemain();
+    void getAllProbabilities();
     void displayGameProcess(int a);
 };
 

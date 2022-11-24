@@ -1,63 +1,69 @@
 #include "ThreeDoor.h"
 #include <mingw.thread.h>
+#include <mingw.mutex.h>
+#include <vector>
+#include <semaphore.h>
+#include <stack>
 
 inline int ThreeDoor::ensureCorrectDoor(int n) {
     //get the correct door
-    srand(time(0));
-    printf("all doors is %d\n",n);
+    // srand(time(0));
+    // LOGA("all doors is %d\n",n);
+    LOGA("all doors is %d\n",n);
     int res = rand() % n;
-    printf("the correct door is %d\n",res);
+    LOGA("the correct door is %d\n",res);
     return res;
 }
 
 inline void ThreeDoor::displayRemain() {
-    printf("\n==========================================\n");
-    printf("==========================================\n");
-    printf("\t[ door\t,\tprobability ]\n");
+    LOGA("\n==========================================\n");
+    LOGA("==========================================\n");
+    LOGA("\t[ door\t,\tprobability ]\n");
     for(int i = 0; i < remainDoors.size() ; i ++) {
-        if(remainDoors[i] == 0)
-            printf("\t[  %d\t,\t  \t  ]",i);
-        else
-            printf("\t[  %d\t,\t %f  ]",i,remainDoors[i]);
+        string signal = "";
         if(i == selectedDoor)
-            printf(" < ");
+            signal += " < ";
         else if(i == deletedDoor)
-            printf(" ×");
+            signal += " ×";
         if(i == correctDoor) 
-            printf(" ○");
-        printf("\n");
+            signal += " ○";
+        if(remainDoors[i] == 0)
+            LOGA("\t[  %d\t,\t  \t  ]%s\n",i,signal.c_str());
+        else
+            LOGA("\t[  %d\t,\t %f  ]%s\n",i,remainDoors[i],signal.c_str());
+        LOGA("\n");
     }
-    printf("==========================================\n");
-    printf("==========================================\n");
+    LOGA("==========================================\n");
+    LOGA("==========================================\n");
 }
 
-inline  void ThreeDoor::displayGameProcess(int a) {
-    printf("\n\n\n");
-    printf(">>>>>>>>>>>>>>>>>>>>>Games Start<<<<<<<<<<<<<<<<<<<\n");
-    printf(">>>>>>     current turn :         %d       <<<<<<<\n",a);
-    printf(">>>>>>     last turn selected :   %d       <<<<<<<\n",selectedDoor);
-    printf(">>>>>>     last turn deleted :    %d       <<<<<<<\n",deletedDoor);    
-    printf(">>>>>>     remain doors :         %d       <<<<<<<\n",doorNum);
-    printf(">>>>>>     correct doors :        %d       <<<<<<<\n",correctDoor);
-    printf(">>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<\n");
-    displayRemain();
+inline  void ThreeDoor::getAllProbabilities() {
+    string titles = "doors";
+    for(int i = 0; i < remainDoors.size() ; i ++)
+        titles += "\t\t  " + to_string(i);
+    string values = "values";
+    for(int i = 0; i < remainDoors.size() ; i ++)
+        values += "\t   " + to_string(remainDoors[i]);
+    LOGW("%s\n",titles.c_str());
+    LOGW("%s\n",values.c_str());
 }
+
 
 inline void ThreeDoor::startGame() {
     // for(int i = 0; i < remainDoors.size(); i++){
     for(int i = 0; i < 2; i++){
-        displayGameProcess(i);
         if(doorNum <= 2)    break;
         selectDoor();
         deleteDoor();
         retryProbability();
+        getAllProbabilities();
     }
     if(selectedDoor != correctDoor) {
-        printf("    you  win!!!!!!!\n");
+        LOGA("    you  win!!!!!!!\n");
         isWin =  true;
     }
     else
-        printf("    you  lose!!!!!!!\n");
+        LOGA("    you  lose!!!!!!!\n");
 }
 
 bool cmp(pair<int,float> a , pair<int,float> b) {
@@ -65,55 +71,58 @@ bool cmp(pair<int,float> a , pair<int,float> b) {
 }
 
 inline void ThreeDoor::selectDoor() {
-    printf("\n\n start to select doors........\n");
+    LOGI("user start to select doors , select the door with max probability........\n");
     //change to vector and sort according probability ASC (from big to small)
     vector<pair<int,float>> doorVect(remainDoors.begin(),remainDoors.end());
     sort(doorVect.begin(),doorVect.end(),cmp);
 
     //get all max probability, and selected one
-    vector<pair<int,float>>::iterator iter = doorVect.begin();
+    // vector<pair<int,float>>::iterator iter = doorVect.begin();
+    auto iter = doorVect.begin();
     float max = doorVect.begin()->second;
-    printf("\t get the max probability \t%f\n",max);
+    LOGI("max probability  %f\n",max);
+    LOGA("\t get the max probability \t%f\n",max);
+
+    //locate the end of the max probability
     while (iter != doorVect.end()) {
-        // printf("[%d,%f]\t",iter->first,iter->second);
         if(max > iter->second) {
-            // printf("\n current probability is %f , max probability is %f\n",iter->second,max);
-            iter --;
+            // LOGI("current probability is %f , max probability is %f\n",iter->second,max);
             break;
         }
+        LOGI("[%d,%f]\n",iter->first,iter->second);
         iter++;
-    }   
-    // cout << endl;
-    int num = iter - doorVect.begin();
-    
-    printf("\t probability  \t num \n");
-    printf("\t   %f  \t  %d \n",max,num);
+    }
+
+    //get the num of max probability
+    int num = iter - doorVect.begin();    
+    // LOGE("\t probability  \t num \n");
+    // LOGE("\t   %f  \t  %d \n",max,num);
     int tmp;
-    do {
-        // printf("all door num is %d  doorNum = %d\n",num,doorNum);
+    // do {
+        // LOGA("all door num is %d  doorNum = %d\n",num,doorNum);
         tmp = rand() % num;
-        // printf("the selected number is :  %d   all door num is %d  doorNum = %d\n",tmp,num,doorNum);
-    } while(remainDoors[doorVect[tmp].first]== 0);
+        LOGI("random num: %d  the selected number is :  %d   max probability num is %d  doorNum = %d\n",tmp,doorVect[tmp].first,num,doorNum);
+    // } while(remainDoors[doorVect[tmp].first] == 0);
     selectedDoor = doorVect[tmp].first;
-    printf("\t get the selected door is \t%d\n",doorVect[tmp].first);
+    LOGI("\t get the selected door is   %d  max probability  %d\n",selectedDoor,num);
     cout << endl;
 }
 
 inline void ThreeDoor::deleteDoor() {
-    printf(" start to delete doors........\n");
-    printf("\t the num can be deleted \t %d\n",doorNum);
+    LOGA(" start to delete doors........\n");
+    LOGA("\t the num can be deleted \t %d\n",doorNum);
     int tmp;
-    printf("\t the  door doors : \t");
+    LOGA("\t the  door doors : \t");
     do {
         tmp = rand() % remainDoors.size();
-        printf("%d   ",tmp);
-    } while(remainDoors[tmp]== 0 || tmp == selectedDoor || tmp == correctDoor);
-    printf("\n");
-    printf("\t get the deleted door is \t%d\n",tmp);
+        LOGA("%d   ",tmp);
+    } while(remainDoors[tmp]== 0 || tmp== selectedDoor || tmp == correctDoor);
+    LOGA("\n");
+    LOGW("\t get the deleted door is \t%d\n",tmp);
     // do {
-    //     printf("input the door to be deleted : ");
+    //     LOGA("input the door to be deleted : ");
     //     scanf("%d",&tmp);
-    //     printf("\n");
+    //     LOGA("\n");
     // } while (tmp == selectedDoor || remainDoors[tmp] == 0 || tmp > remainDoors.size() || tmp < 0);
     
     remainDoors[tmp] = 0;
@@ -123,12 +132,12 @@ inline void ThreeDoor::deleteDoor() {
 }
 
 inline void ThreeDoor::retryProbability() {
-    printf(" start to caculate probability........\n");
+    LOGA(" start to caculate probability........\n");
     float prob = (1.0 - remainDoors[selectedDoor]) / (doorNum - 1 );
-    printf("\t selectedProb \t remainProbe \t remainDoor \t result\n");
-    printf("\t   %f  \t   %f  \t   %d  \t  %d  \n",
+    LOGW("\t selectedProb \t remainProbe \t remainDoor \t result\n");
+    LOGW("\t   %f  \t   %f  \t   %d  \t  %f  \n",
                 remainDoors[selectedDoor],(1.0 - remainDoors[selectedDoor]),doorNum,prob);
-    printf("the probability is  %f",prob);
+    LOGA("the probability is  %f",prob);
     for(int i = 0; i < remainDoors.size();i++) {
         if(remainDoors[i] == 0 || i == selectedDoor) continue;
         remainDoors[i] = prob;
@@ -136,21 +145,43 @@ inline void ThreeDoor::retryProbability() {
 }
 
 static int winner = 0;
+static mutex m_mutex;
+
+void start(int n) {
+    for(int i = 1; i <= 10; i++) {
+        ThreeDoor td(n);
+        td.startGame();
+        m_mutex.try_lock();
+        if(td.isWin) winner++;
+        m_mutex.unlock();
+    }
+}
 
 int main(){
     
-    srand(time(0));
+    // srand(time(0));
     int n;
     // scanf("%d",&n);
-    n = 3;
-    for(int i = 1 ; i <= 100 ; i++) {
-        ThreeDoor td(n);
-        // threeDoors(n);
-        td.startGame();
-        if(td.isWin) winner++;
+    n = 4;
+    // vector<thread> all_thread;
+    stack<thread> all_thread;
+    for(int i = 1 ; i <= 200; i++) {
+        all_thread.emplace(start,n);
+        
+        // ThreeDoor td(n);
+        // // threeDoors(n);
+        // td.startGame();
+        // if(td.isWin) winner++;
+        
     }
-    printf("/////////////////////////////////////////////////\n");
-    printf("\t\twinner is %d\n",winner);
-    printf("/////////////////////////////////////////////////\n");
+    for(int i = 1; i <= 200; i++) {
+        all_thread.top().join();
+        all_thread.pop();
+    }
+
+    // this_thread::sleep_for(chrono::seconds(100));
+    LOGE("/////////////////////////////////////////////////\n");
+    LOGE("\t\twinner is %d\n",winner);
+    LOGE("/////////////////////////////////////////////////\n");
     return 0;
 }
